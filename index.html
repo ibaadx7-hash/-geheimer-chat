@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Geheimer Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #050816;
+      --card: #0f172a;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 900px;
+      background: linear-gradient(135deg, rgba(148, 163, 184, 0.15), rgba(15, 23, 42, 0.95));
+      border-radius: 18px;
+      padding: 2px;
+      box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+    }
+
+    .inner {
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 55%),
+                  #020617;
+      border-radius: 16px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 12px 25px rgba(15, 23, 42, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .code-input {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .code-input input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .code-input input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .code-input button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow:
+        0 10px 20px rgba(22, 163, 74, 0.45),
+        0 0 0 1px rgba(21, 128, 61, 0.7);
+      transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+      white-space: nowrap;
+    }
+
+    .code-input button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow:
+        0 14px 26px rgba(22, 163, 74, 0.55),
+        0 0 0 1px rgba(21, 128, 61, 0.9);
+    }
+
+    .code-input button:active {
+      transform: translateY(0);
+      box-shadow:
+        0 8px 18px rgba(22, 163, 74, 0.4),
+        0 0 0 1px rgba(21, 128, 61, 0.8);
+    }
+
+    .hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .error {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--danger);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pill {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .pill.accent {
+      border-color: rgba(34, 197, 94, 0.7);
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.12);
+    }
+
+    /* Chat panel */
+
+    .chat-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .chat-room {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .chat-status {
+      font-size: 0.75rem;
+      color: #bbf7d0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-status .dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    .chat-log {
+      flex: 1;
+      min-height: 180px;
+      max-height: 320px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
+    }
+
+    .chat-log::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-log::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.7);
+      border-radius: 999px;
+    }
+
+    .msg {
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .msg span.user {
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+
+    .msg span.time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .msg span.text {
+      display: block;
+      margin-left: 2px;
+      color: var(--text);
+    }
+
+    .msg.system span.text {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chat-input-row input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .chat-input-row input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .chat-input-row button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow:
+        0 10px 20px rgba(22, 163, 74, 0.45),
+        0 0 0 1px rgba(21, 128, 61, 0.7);
+      transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+      white-space: nowrap;
+    }
+
+    .chat-input-row button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow:
+        0 14px 26px rgba(22, 163, 74, 0.55),
+        0 0 0 1px rgba(21, 128, 61, 0.9);
+    }
+
+    .chat-input-row button:active {
+      transform: translateY(0);
+      box-shadow:
+        0 8px 18px rgba(22, 163, 74, 0.4),
+        0 0 0 1px rgba(21, 128, 61, 0.8);
+    }
+
+    .small-note {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .blur-overlay {
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(10px);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 12px;
+      z-index: 2;
+    }
+
+    .blur-overlay span {
+      max-width: 260px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="inner">
+      <!-- Zugangscode Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="title">
+            <div class="dot"></div>
+            Geheimer Zugang
+          </div>
+          <div class="badge">PRIVATE ROOM</div>
+        </div>
+        <p class="subtitle">
+          Nur wer den richtigen Code kennt, kann den Chatraum betreten.
+        </p>
+
+        <div class="code-input">
+          <input id="codeInput" type="password" placeholder="Zugangscode eingeben">
+          <button id="codeBtn">
+            Freischalten
+          </button>
+        </div>
+        <div id="codeError" class="error" style="display:none;"></div>
+        <p class="hint">
+          Tipp: Du kannst den Code später im Script ändern (Konstante <code>ACCESS_CODE</code>).
+        </p>
+
+        <div class="pill-row">
+          <div class="pill accent">Code-geschützt</div>
+          <div class="pill">Lokal speicherbar</div>
+          <div class="pill">Kein Account nötig</div>
+        </div>
+      </div>
+
+      <!-- Chat Panel -->
+      <div class="panel" style="position:relative;">
+        <div id="chatLockOverlay" class="blur-overlay">
+          <span>Chat ist gesperrt. Gib links den richtigen Zugangscode ein, um den Raum zu betreten.</span>
+        </div>
+
+        <div class="chat-wrapper">
+          <div class="chat-header">
+            <div class="title" style="font-size:1rem;">
+              <div class="dot"></div>
+              Chatraum
+            </div>
+            <div class="chat-status">
+              <div class="dot"></div>
+              lokal verbunden
+            </div>
+          </div>
+          <div class="chat-room">
+            Raum: <strong>#private-room</strong>
+          </div>
+
+          <div id="chatLog" class="chat-log"></div>
+
+          <div class="chat-input-row">
+            <input id="nameInput" type="text" placeholder="Dein Name (optional)">
+            <input id="msgInput" type="text" placeholder="Nachricht schreiben und Enter drücken…">
+            <button id="sendBtn">Senden</button>
+          </div>
+
+          <p class="small-note">
+            Aktuell werden Nachrichten nur lokal im Browser gespeichert (localStorage).  
+            Für echten Mehrnutzer-Chat brauchst du später einen Server / Realtime‑Backend.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Konfiguration
+    // -----------------------------
+    const ACCESS_CODE = "MEIN-GEHEIMCODE-123"; // <- hier deinen Code setzen
+    const STORAGE_KEY = "secret_chat_messages_v1";
+
+    const codeInput = document.getElementById("codeInput");
+    const codeBtn = document.getElementById("codeBtn");
+    const codeError = document.getElementById("codeError");
+    const chatLockOverlay = document.getElementById("chatLockOverlay");
+
+    const chatLog = document.getElementById("chatLog");
+    const nameInput = document.getElementById("nameInput");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    let unlocked = false;
+
+    // -----------------------------
+    // Zugangscode-Logik
+    // -----------------------------
+    function unlockChat() {
+      const val = codeInput.value.trim();
+      if (!val) {
+        codeError.textContent = "Bitte einen Code eingeben.";
+        codeError.style.display = "block";
+        return;
+      }
+      if (val !== ACCESS_CODE) {
+        codeError.textContent = "Falscher Code.";
+        codeError.style.display = "block";
+        return;
+      }
+      codeError.style.display = "none";
+      unlocked = true;
+      chatLockOverlay.style.display = "none";
+      codeInput.value = "";
+      loadMessages();
+      addSystemMessage("Du hast den Raum betreten.");
+    }
+
+    codeBtn.addEventListener("click", unlockChat);
+    codeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") unlockChat();
+    });
+
+    // -----------------------------
+    // Chat-Logik (lokal)
+    // -----------------------------
+    function loadMessages() {
+      chatLog.innerHTML = "";
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const msgs = JSON.parse(raw);
+        msgs.forEach(renderMessage);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      } catch (e) {
+        console.error("Fehler beim Laden der Nachrichten:", e);
+      }
+    }
+
+    function saveMessage(msg) {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      let msgs = [];
+      if (raw) {
+        try {
+          msgs = JSON.parse(raw);
+        } catch (e) {
+          msgs = [];
+        }
+      }
+      msgs.push(msg);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
+    }
+
+    function renderMessage(msg) {
+      const div = document.createElement("div");
+      div.className = "msg" + (msg.type === "system" ? " system" : "");
+      const time = new Date(msg.time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+      div.innerHTML = `
+        <span class="user">${msg.type === "system" ? "System" : (msg.user || "Gast")}</span>
+        <span class="time">${time}</span>
+        <span class="text">${escapeHtml(msg.text)}</span>
+      `;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function addSystemMessage(text) {
+      const msg = {
+        type: "system",
+        user: "System",
+        text,
+        time: Date.now()
+      };
+      saveMessage(msg);
+      renderMessage(msg);
+    }
+
+    function sendMessage() {
+      if (!unlocked) return;
+      const text = msgInput.value.trim();
+      if (!text) return;
+      const user = nameInput.value.trim() || "Gast";
+      const msg = {
+        type: "user",
+        user,
+        text,
+        time: Date.now()
+      };
+      msgInput.value = "";
+      saveMessage(msg);
+      renderMessage(msg);
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    // Beim ersten Laden: Chat bleibt gesperrt, bis Code stimmt
+  </script>
+</body>
+</html>
